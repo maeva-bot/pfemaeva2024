@@ -1,6 +1,7 @@
 
 from flask import Flask, render_template, jsonify,request
 from flask_sqlalchemy import SQLAlchemy
+from flask_httpauth import HTTPBasicAuth  # Ajout de l'import pour HTTPBasicAuth
 from models import create_example_records,avis,programme_exercice
 from sqlalchemy import delete
 
@@ -14,6 +15,22 @@ app.config.from_object('config.Config')
 
 # Initialisation de l'extension SQLAlchemy
 db.init_app(app)
+
+# Initialisation de l'extension HTTPBasicAuth
+auth = HTTPBasicAuth()
+
+# Fonction pour vérifier les informations d'identification de l'utilisateur
+@auth.verify_password
+def verify_password(email, mot_de_passe):
+    utilisateur = Utilisateur.query.filter_by(email=email).first()
+    if utilisateur and utilisateur.mot_de_passe == mot_de_passe:
+        return True
+    return False
+
+@app.route('/')
+def hello():
+    return render_template('index.html')
+
 
 # Définition de la route pour afficher les informations de tous les utilisateurs
 @app.route('/utilisateurs', methods=['GET'])
@@ -32,6 +49,13 @@ def get_utilisateurs():
         }
         result.append(utilisateur_dict)
     return jsonify(result)
+
+# Les autres routes protégées par l'authentification HTTPBasicAuth seront similaires à celle ci-dessus
+
+# Créer un nouvel utilisateur 
+#@app.route('/utilisateur', methods=['POST'])
+#@auth.login_required
+#def ajouter_utilisateur():
 
 #Créer un nouvel utilisateur 
 @app.route('/utilisateur', methods=['POST'])
